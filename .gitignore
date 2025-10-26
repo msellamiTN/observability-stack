@@ -1,0 +1,54 @@
+# Environment variables with secrets
+.env
+.env.local
+.env.*.local
+
+# Grafana data
+grafana/data/
+
+# InfluxDB data
+influxdb/data/
+influxdb/config/
+influxdb/logs/
+influxdb/backup/
+influxdb/keys/
+
+# Prometheus data
+prometheus/data/
+
+# Loki data
+loki/data/
+
+# MySQL data
+mysql/data/
+
+# MinIO data
+minio/data/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker volumes
+volumes/
+
+# Backup files
+*.bak
+*.backup

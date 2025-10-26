@@ -1,0 +1,51 @@
+# =============================================
+# Grafana Data Sources Configuration
+# E-Banking Observability Stack
+# =============================================
+
+apiVersion: 1
+
+# Delete existing datasources to avoid conflicts
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+  - name: MS SQL Server - E-Banking
+    orgId: 1
+
+datasources:
+  # Prometheus - Default datasource for metrics
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    uid: prometheus
+    version: 1
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s
+      queryTimeout: 60s
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
+
+  # MS SQL Server - E-Banking database
+  - name: MS SQL Server - E-Banking
+    type: mssql
+    access: proxy
+    url: mssql:1433
+    database: EBankingDB
+    user: sa
+    isDefault: false
+    editable: true
+    uid: mssql_ebanking
+    version: 1
+    secureJsonData:
+      password: 'EBanking@Secure123!'
+    jsonData:
+      maxOpenConns: 100
+      maxIdleConns: 100
+      connMaxLifetime: 14400
+      encrypt: 'false'
+      sslmode: 'disable'
+      authenticator: 'SQL Server Authentication'

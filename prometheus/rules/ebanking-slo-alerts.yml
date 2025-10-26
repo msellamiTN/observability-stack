@@ -1,0 +1,406 @@
+groups:
+  - name: ebanking_slo_alerts
+    interval: 30s
+    rules:
+      # ============================================
+      # CRITICAL ALERTS - Page Immediately
+      # ============================================
+      
+      - alert: SLOFastBurn
+        expr: |
+          (
+            sum(rate(ebanking_api_requests_total{status_code=~"5..",environment="production"}[1h])) 
+            / sum(rate(ebanking_api_requests_total{environment="production"}[1h]))
+          ) > (0.0005 * 14.4)
+          and
+          (
+            sum(rate(ebanking_api_requests_total{status_code=~"5..",environment="production"}[5m])) 
+            / sum(rate(ebanking_api_requests_total{environment="production"}[5m]))
+          ) > (0.0005 * 14.4)
+        for: 2m
+        labels:
+          severity: critical
+          environment: production
+          methodology: slo
+          team: platform
+        annotations:
+          summary: "🚨 CRITICAL: Fast SLO burn rate detected"
+          description: |
+            Error rate is {{ $value | humanizePercentage }} (14.4x SLO budget).
+            At this rate, the error budget will be exhausted in 2 days.
+            
+            **Action Required**: Investigate immediately and mitigate errors.
+            
+            **Runbook**: https://wiki.company.com/runbooks/slo-fast-burn
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: HighErrorRate
+        expr: |
+          100 * (
+            sum(rate(ebanking_api_requests_total{status_code=~"5..",environment="production"}[5m])) 
+            / sum(rate(ebanking_api_requests_total{environment="production"}[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: critical
+          environment: production
+          methodology: red
+          team: platform
+        annotations:
+          summary: "🚨 CRITICAL: High error rate detected"
+          description: |
+            Error rate is {{ $value }}% (threshold: 1%)
+            
+            **Impact**: Customer-facing errors affecting user experience
+            **Action**: Check application logs and recent deployments
+            
+            **Query**: 
+            ```
+            sum(rate(ebanking_api_requests_total{status_code=~"5.."}[5m])) by (endpoint)
+            ```
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ebanking_request_duration_seconds_bucket{environment="production"}[5m])) by (le, endpoint)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          environment: production
+          methodology: red
+          team: platform
+        annotations:
+          summary: "🚨 CRITICAL: High latency on {{ $labels.endpoint }}"
+          description: |
+            P95 latency is {{ $value }}s (threshold: 500ms)
+            Endpoint: {{ $labels.endpoint }}
+            
+            **Impact**: Degraded user experience
+            **Action**: Check database performance, external dependencies, and resource utilization
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          sum(ebanking_database_connections{environment="production"}) > 48
+        for: 2m
+        labels:
+          severity: critical
+          environment: production
+          methodology: use
+          team: platform
+        annotations:
+          summary: "🚨 CRITICAL: Database connection pool near exhaustion"
+          description: |
+            Connection pool at {{ $value }}/50 (threshold: 48)
+            
+            **Impact**: New requests will fail, service degradation imminent
+            **Action**: 
+            1. Check for connection leaks
+            2. Review slow queries
+            3. Consider scaling database or increasing pool size
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: CriticalFraudAlertSpike
+        expr: |
+          sum(rate(ebanking_fraud_alerts_total{severity="critical",environment="production"}[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: critical
+          environment: production
+          methodology: business
+          team: security
+        annotations:
+          summary: "🚨 CRITICAL: Spike in critical fraud alerts"
+          description: |
+            Critical fraud alerts: {{ $value }}/sec (threshold: 0.5/sec)
+            
+            **Impact**: Potential security breach or fraud attack
+            **Action**: 
+            1. Alert security team immediately
+            2. Review fraud detection logs
+            3. Consider temporary rate limiting
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      # ============================================
+      # WARNING ALERTS - Investigate
+      # ============================================
+      
+      - alert: SLOSlowBurn
+        expr: |
+          (
+            sum(rate(ebanking_api_requests_total{status_code=~"5..",environment="production"}[3d])) 
+            / sum(rate(ebanking_api_requests_total{environment="production"}[3d]))
+          ) > 0.0005
+          and
+          (
+            sum(rate(ebanking_api_requests_total{status_code=~"5..",environment="production"}[1h])) 
+            / sum(rate(ebanking_api_requests_total{environment="production"}[1h]))
+          ) > 0.0005
+        for: 1h
+        labels:
+          severity: warning
+          environment: production
+          methodology: slo
+          team: platform
+        annotations:
+          summary: "⚠️ WARNING: Slow SLO burn rate detected"
+          description: |
+            Error rate is {{ $value | humanizePercentage }} over 3 days.
+            At this rate, error budget will be exhausted in 30 days.
+            
+            **Action**: Investigate error trends and plan improvements
+            **Runbook**: https://wiki.company.com/runbooks/slo-slow-burn
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: ErrorBudgetLow
+        expr: |
+          (
+            1 - (
+              sum(increase(ebanking_api_requests_total{status_code=~"5..",environment="production"}[30d])) 
+              / (sum(increase(ebanking_api_requests_total{environment="production"}[30d])) * 0.0005)
+            )
+          ) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+          environment: production
+          methodology: slo
+          team: platform
+        annotations:
+          summary: "⚠️ WARNING: Error budget below 20%"
+          description: |
+            Error budget remaining: {{ $value | humanizePercentage }}
+            
+            **Action**: 
+            1. Freeze non-critical deployments
+            2. Focus on reliability improvements
+            3. Review recent incidents
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: DatabaseConnectionPoolHigh
+        expr: |
+          sum(ebanking_database_connections{environment="production"}) > 40
+        for: 10m
+        labels:
+          severity: warning
+          environment: production
+          methodology: use
+          team: platform
+        annotations:
+          summary: "⚠️ WARNING: Database connection pool utilization high"
+          description: |
+            Connection pool at {{ $value }}/50 (threshold: 40)
+            
+            **Action**: Monitor for further increase, investigate connection usage patterns
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: HighSessionCount
+        expr: |
+          ebanking_active_sessions{environment="production"} > 500
+        for: 15m
+        labels:
+          severity: warning
+          environment: production
+          methodology: use
+          team: platform
+        annotations:
+          summary: "⚠️ WARNING: High active session count"
+          description: |
+            Active sessions: {{ $value }} (threshold: 500)
+            
+            **Action**: Monitor for saturation, prepare to scale if needed
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: HighDatabaseQueryLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ebanking_database_query_duration_seconds_bucket{environment="production"}[5m])) 
+            by (le, query_type)
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          environment: production
+          methodology: use
+          team: platform
+        annotations:
+          summary: "⚠️ WARNING: High database query latency"
+          description: |
+            P95 query latency: {{ $value }}s for {{ $labels.query_type }}
+            Threshold: 100ms
+            
+            **Action**: Review slow queries, check database performance
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: FraudAlertSpike
+        expr: |
+          sum(rate(ebanking_fraud_alerts_total{severity=~"high|medium",environment="production"}[5m])) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          environment: production
+          methodology: business
+          team: security
+        annotations:
+          summary: "⚠️ WARNING: Increased fraud alert rate"
+          description: |
+            Fraud alerts: {{ $value }}/sec (threshold: 0.2/sec)
+            Severity: {{ $labels.severity }}
+            
+            **Action**: Review fraud patterns, monitor for escalation
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: LoginFailureRateHigh
+        expr: |
+          100 * (
+            sum(rate(ebanking_login_attempts_total{status="failed",environment="production"}[5m])) 
+            / sum(rate(ebanking_login_attempts_total{environment="production"}[5m]))
+          ) > 10
+        for: 10m
+        labels:
+          severity: warning
+          environment: production
+          methodology: red
+          team: security
+        annotations:
+          summary: "⚠️ WARNING: High login failure rate"
+          description: |
+            Login failure rate: {{ $value }}% (threshold: 10%)
+            
+            **Possible causes**:
+            - Credential stuffing attack
+            - User authentication issues
+            - System problems
+            
+            **Action**: Review failed login reasons and patterns
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      # ============================================
+      # INFO ALERTS - Awareness
+      # ============================================
+      
+      - alert: CustomerSatisfactionLow
+        expr: |
+          ebanking_customer_satisfaction_score{environment="production"} < 85
+        for: 30m
+        labels:
+          severity: info
+          environment: production
+          methodology: business
+          team: product
+        annotations:
+          summary: "ℹ️ INFO: Customer satisfaction score low"
+          description: |
+            Customer satisfaction: {{ $value }}/100 (threshold: 85)
+            
+            **Action**: Review user feedback and recent changes
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: DailyRevenueDrop
+        expr: |
+          (
+            ebanking_daily_revenue_eur{environment="production"}
+            / ebanking_daily_revenue_eur{environment="production"} offset 1d
+          ) < 0.8
+        for: 1h
+        labels:
+          severity: info
+          environment: production
+          methodology: business
+          team: product
+        annotations:
+          summary: "ℹ️ INFO: Daily revenue drop detected"
+          description: |
+            Current revenue: €{{ $value }}
+            Drop: {{ $value | humanizePercentage }} compared to yesterday
+            
+            **Action**: Review transaction volumes and success rates
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      # ============================================
+      # MULTI-ENVIRONMENT ALERTS
+      # ============================================
+      
+      - alert: StagingErrorRateHigh
+        expr: |
+          100 * (
+            sum(rate(ebanking_api_requests_total{status_code=~"5..",environment="staging"}[5m])) 
+            / sum(rate(ebanking_api_requests_total{environment="staging"}[5m]))
+          ) > 5
+        for: 10m
+        labels:
+          severity: warning
+          environment: staging
+          methodology: red
+          team: platform
+        annotations:
+          summary: "⚠️ STAGING: High error rate"
+          description: |
+            Staging error rate: {{ $value }}% (threshold: 5%)
+            
+            **Action**: Fix before promoting to production
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+      
+      - alert: DevelopmentMetricsNotReporting
+        expr: |
+          absent(ebanking_api_requests_total{environment="development"})
+        for: 15m
+        labels:
+          severity: info
+          environment: development
+          methodology: monitoring
+          team: platform
+        annotations:
+          summary: "ℹ️ DEVELOPMENT: Metrics not reporting"
+          description: |
+            Development environment metrics have stopped reporting.
+            
+            **Action**: Check if exporter is running
+          dashboard: "https://grafana.company.com/d/ebanking-observability-complete"
+
+  # ============================================
+  # RECORDING RULES - Pre-computed Metrics
+  # ============================================
+  - name: ebanking_recording_rules
+    interval: 30s
+    rules:
+      - record: job:ebanking_request_rate:5m
+        expr: sum(rate(ebanking_api_requests_total[5m])) by (environment, endpoint)
+      
+      - record: job:ebanking_error_rate:5m
+        expr: |
+          sum(rate(ebanking_api_requests_total{status_code=~"5.."}[5m])) by (environment, endpoint)
+          / sum(rate(ebanking_api_requests_total[5m])) by (environment, endpoint)
+      
+      - record: job:ebanking_latency_p95:5m
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ebanking_request_duration_seconds_bucket[5m])) by (le, environment, endpoint)
+          )
+      
+      - record: job:ebanking_latency_p99:5m
+        expr: |
+          histogram_quantile(0.99, 
+            sum(rate(ebanking_request_duration_seconds_bucket[5m])) by (le, environment, endpoint)
+          )
+      
+      - record: job:ebanking_slo_availability:30d
+        expr: |
+          100 * (
+            sum(rate(ebanking_api_requests_total[30d])) by (environment) 
+            - sum(rate(ebanking_api_requests_total{status_code=~"5.."}[30d])) by (environment)
+          ) / sum(rate(ebanking_api_requests_total[30d])) by (environment)
+      
+      - record: job:ebanking_error_budget_remaining:30d
+        expr: |
+          1 - (
+            sum(increase(ebanking_api_requests_total{status_code=~"5.."}[30d])) by (environment) 
+            / (sum(increase(ebanking_api_requests_total[30d])) by (environment) * 0.0005)
+          )
+      
+      - record: job:ebanking_transaction_success_rate:5m
+        expr: |
+          sum(rate(ebanking_transactions_processed_total{status="success"}[5m])) by (environment, transaction_type)
+          / sum(rate(ebanking_transactions_processed_total[5m])) by (environment, transaction_type)

@@ -1,0 +1,10 @@
+*.csproj
+*.cs
+*.json
+go.mod
+go.sum
+__pycache__
+*.pyc
+.git
+.gitignore
+README.md

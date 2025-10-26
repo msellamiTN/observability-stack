@@ -1,0 +1,160 @@
+# OpenTelemetry Auto-Instrumentation Configuration
+# Reference: https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation
+
+# General settings
+general:
+  service_name: payment-api-instrumented
+  service_version: 1.0.0
+
+# Instrumentation settings
+instrumentation:
+  # ASP.NET Core instrumentation
+  aspnetcore:
+    enabled: true
+    record_exception: true
+    enable_grpc_instrumentation: true
+    
+  # HTTP Client instrumentation
+  httpclient:
+    enabled: true
+    record_exception: true
+    
+  # SQL Client instrumentation
+  sqlclient:
+    enabled: true
+    set_db_statement_for_text: true
+    record_exception: true
+    enable_connection_level_attributes: true
+    
+  # gRPC instrumentation
+  grpc:
+    enabled: true
+    
+  # Entity Framework Core instrumentation
+  entityframeworkcore:
+    enabled: true
+    set_db_statement_for_text: true
+
+# Traces configuration
+traces:
+  # Exporter configuration
+  exporter:
+    otlp:
+      enabled: true
+      endpoint: http://tempo:4317
+      protocol: grpc
+      timeout: 30000
+      
+    console:
+      enabled: true
+      
+  # Sampler configuration
+  sampler:
+    type: always_on
+    
+  # Batch processor configuration
+  batch_processor:
+    max_queue_size: 2048
+    max_export_batch_size: 512
+    scheduled_delay: 5000
+    exporter_timeout: 30000
+
+# Metrics configuration
+metrics:
+  # Exporter configuration
+  exporter:
+    prometheus:
+      enabled: true
+      endpoint: /metrics
+      
+    console:
+      enabled: false
+      
+  # Readers configuration
+  readers:
+    - type: periodic
+      interval: 60000
+
+# Logs configuration
+logs:
+  # Exporter configuration
+  exporter:
+    console:
+      enabled: true
+      
+  # Log level
+  level: information
+  
+  # Include formatted message
+  include_formatted_message: true
+  
+  # Include scopes
+  include_scopes: true
+
+# Resource attributes
+resource:
+  attributes:
+    # Service attributes
+    service.namespace: ebanking.observability
+    
+    # Deployment attributes
+    deployment.environment: production
+    deployment.environment.type: openshift
+    
+    # Application metadata
+    app.team: platform-engineering
+    app.owner: observability-team
+    app.tier: backend
+    app.type: instrumented-demo
+    app.purpose: observability-testing
+    
+    # Cloud attributes
+    cloud.platform: openshift
+    cloud.provider: redhat
+
+# Environment variables mapping
+# These can be set in the deployment manifest
+env_vars:
+  # General
+  OTEL_SERVICE_NAME: payment-api-instrumented
+  OTEL_SERVICE_VERSION: 1.0.0
+  OTEL_RESOURCE_ATTRIBUTES: service.namespace=ebanking.observability,deployment.environment=production
+  
+  # Traces
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_TRACES_SAMPLER: always_on
+  
+  # Metrics
+  OTEL_METRICS_EXPORTER: prometheus
+  
+  # Logs
+  OTEL_LOGS_EXPORTER: console
+  OTEL_LOG_LEVEL: information
+  
+  # Instrumentation
+  OTEL_DOTNET_AUTO_TRACES_INSTRUMENTATION_ENABLED: true
+  OTEL_DOTNET_AUTO_METRICS_INSTRUMENTATION_ENABLED: true
+  OTEL_DOTNET_AUTO_LOGS_INSTRUMENTATION_ENABLED: true
+  
+  # Specific instrumentations
+  OTEL_DOTNET_AUTO_TRACES_ASPNETCORE_INSTRUMENTATION_ENABLED: true
+  OTEL_DOTNET_AUTO_TRACES_HTTPCLIENT_INSTRUMENTATION_ENABLED: true
+  OTEL_DOTNET_AUTO_TRACES_SQLCLIENT_INSTRUMENTATION_ENABLED: true
+  OTEL_DOTNET_AUTO_TRACES_GRPC_INSTRUMENTATION_ENABLED: true
+  OTEL_DOTNET_AUTO_TRACES_ENTITYFRAMEWORKCORE_INSTRUMENTATION_ENABLED: true
+  
+  # Additional settings
+  OTEL_DOTNET_AUTO_TRACES_CONSOLE_EXPORTER_ENABLED: true
+  OTEL_DOTNET_AUTO_METRICS_CONSOLE_EXPORTER_ENABLED: false
+  OTEL_DOTNET_AUTO_LOGS_CONSOLE_EXPORTER_ENABLED: true
+  
+  # Logging to file (for Loki)
+  LOG_DIRECTORY: /var/log/payment-api
+  ENABLE_FILE_LOGGING: true
+  
+  # Kubernetes/OpenShift metadata (injected by downward API)
+  POD_NAME: $(POD_NAME)
+  POD_NAMESPACE: $(POD_NAMESPACE)
+  NODE_NAME: $(NODE_NAME)
