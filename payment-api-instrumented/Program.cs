@@ -10,7 +10,6 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 using OpenTelemetry.Instrumentation.Runtime;
-using OpenTelemetry.Instrumentation.Process as ProcessInstrumentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
