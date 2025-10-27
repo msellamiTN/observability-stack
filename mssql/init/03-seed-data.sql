@@ -109,6 +109,11 @@ PRINT 'Seeding Clients (1000 sample)...';
 GO
 
 DECLARE @ClientCounter INT = 1;
+DECLARE @FirstNames TABLE (Name NVARCHAR(100));
+DECLARE @LastNames TABLE (Name NVARCHAR(100));
+
+INSERT INTO @FirstNames VALUES ('Mohamed'), ('Ahmed'), ('Fatima'), ('Aisha'), ('Ali'), ('Sara'), ('Youssef'), ('Leila'), ('Omar'), ('Nour');
+INSERT INTO @LastNames VALUES ('Ben Ali'), ('Trabelsi'), ('Jebali'), ('Hamdi'), ('Karoui'), ('Mejri'), ('Gharbi'), ('Sassi'), ('Cherni'), ('Bouazizi');
 
 WHILE @ClientCounter <= 1000
 BEGIN
