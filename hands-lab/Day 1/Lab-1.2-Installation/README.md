@@ -99,6 +99,7 @@ Voici ce que vous allez déployer :
 ```
 
 ---
+![alt text](./image.png)
 
 ## 📁 Fichiers de Configuration de la Stack
 
