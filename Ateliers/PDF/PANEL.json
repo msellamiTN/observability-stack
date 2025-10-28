@@ -1,0 +1,236 @@
+{
+  "id": 29,
+  "type": "table",
+  "title": "🎯 API Endpoint Performance Summary (SLO Dashboard)",
+  "gridPos": {
+    "x": 0,
+    "y": 27,
+    "h": 10,
+    "w": 24
+  },
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "align": "auto",
+        "footer": {
+          "reducers": []
+        },
+        "cellOptions": {
+          "type": "auto"
+        },
+        "inspect": false
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          }
+        ]
+      },
+      "color": {
+        "mode": "thresholds"
+      },
+      "unit": "short"
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Endpoint"
+        },
+        "properties": [
+          {
+            "id": "custom.width",
+            "value": 250
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Requests/sec"
+        },
+        "properties": [
+          {
+            "id": "custom.cellOptions",
+            "value": {
+              "type": "color-background"
+            }
+          },
+          {
+            "id": "thresholds",
+            "value": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 5
+                },
+                {
+                  "color": "red",
+                  "value": 10
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "P95 Latency (ms)"
+        },
+        "properties": [
+          {
+            "id": "custom.cellOptions",
+            "value": {
+              "type": "color-background"
+            }
+          },
+          {
+            "id": "thresholds",
+            "value": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 500
+                },
+                {
+                  "color": "red",
+                  "value": 1000
+                }
+              ]
+            }
+          },
+          {
+            "id": "unit",
+            "value": "ms"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Error Rate %"
+        },
+        "properties": [
+          {
+            "id": "custom.cellOptions",
+            "value": {
+              "type": "color-background"
+            }
+          },
+          {
+            "id": "thresholds",
+            "value": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 5
+                }
+              ]
+            }
+          },
+          {
+            "id": "unit",
+            "value": "percent"
+          }
+        ]
+      }
+    ]
+  },
+  "transformations": [
+    {
+      "id": "merge",
+      "options": {}
+    },
+    {
+      "id": "organize",
+      "options": {
+        "excludeByName": {
+          "Time": true
+        },
+        "indexByName": {
+          "Value #A": 1,
+          "Value #B": 2,
+          "Value #C": 3,
+          "endpoint": 0
+        },
+        "renameByName": {
+          "Value #A": "Requests/sec",
+          "Value #B": "P95 Latency (ms)",
+          "Value #C": "Error Rate %",
+          "endpoint": "Endpoint"
+        }
+      }
+    }
+  ],
+  "pluginVersion": "12.2.1",
+  "targets": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "expr": "sum(rate(ebanking_api_requests_total{environment=~\"$environment\"}[5m])) by (endpoint)",
+      "format": "table",
+      "instant": true,
+      "refId": "A"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "expr": "histogram_quantile(0.95, sum(rate(ebanking_request_duration_seconds_bucket{environment=~\"$environment\"}[5m])) by (le, endpoint)) * 1000",
+      "format": "table",
+      "instant": true,
+      "refId": "B"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "expr": "(sum(rate(ebanking_api_requests_total{environment=~\"$environment\",status_code=~\"5..\"}[5m])) by (endpoint) / sum(rate(ebanking_api_requests_total{environment=~\"$environment\"}[5m])) by (endpoint)) * 100",
+      "format": "table",
+      "instant": true,
+      "refId": "C"
+    }
+  ],
+  "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROMETHEUS}"
+  },
+  "options": {
+    "showHeader": true,
+    "cellHeight": "sm",
+    "sortBy": [
+      {
+        "desc": true,
+        "displayName": "Requests/sec"
+      }
+    ]
+  }
+}
