@@ -323,7 +323,7 @@ services:
     networks:
       - observability
 
-  # Grafana MCP (Metrics Collection Proxy)
+  # Grafana MCP (Metrics Collection Proxy) 
   grafana-mcp:
     image: mcp/grafana:latest
     container_name: grafana-mcp
