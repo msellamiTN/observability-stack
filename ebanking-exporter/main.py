@@ -30,13 +30,14 @@ ENVIRONMENT = os.getenv('ENVIRONMENT', 'training')  # training, development, sta
 SERVICE_NAME = os.getenv('SERVICE_NAME', 'ebanking-api')
 REGION = os.getenv('REGION', 'eu-west-1')
 CLUSTER = os.getenv('CLUSTER', 'training-cluster')
+APP_VERSION = os.getenv('APP_VERSION', '1.0.0')
 
-logger.info(f"Starting eBanking Exporter - Environment: {ENVIRONMENT}, Service: {SERVICE_NAME}")
+logger.info(f"Starting eBanking Exporter - Environment: {ENVIRONMENT}, Service: {SERVICE_NAME}, Version: {APP_VERSION}")
 
 # Application info
 app_info = Info('ebanking_app', 'eBanking Application Information')
 app_info.info({
-    'version': '1.0.0',
+    'version': APP_VERSION,
     'environment': ENVIRONMENT,
     'service': SERVICE_NAME,
     'region': REGION,
