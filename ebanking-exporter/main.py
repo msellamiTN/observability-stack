@@ -13,6 +13,8 @@ Best Practices:
 import time
 import random
 import os
+import uuid
+from datetime import datetime
 from prometheus_client import start_http_server, Counter, Gauge, Histogram, Info
 import logging
 
@@ -32,7 +34,11 @@ REGION = os.getenv('REGION', 'eu-west-1')
 CLUSTER = os.getenv('CLUSTER', 'training-cluster')
 APP_VERSION = os.getenv('APP_VERSION', '1.0.0')
 
-logger.info(f"Starting eBanking Exporter - Environment: {ENVIRONMENT}, Service: {SERVICE_NAME}, Version: {APP_VERSION}")
+# Generate unique instance ID for each restart
+INSTANCE_ID = str(uuid.uuid4())[:8]  # Short UUID
+START_TIME = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+
+logger.info(f"Starting eBanking Exporter - Environment: {ENVIRONMENT}, Service: {SERVICE_NAME}, Version: {APP_VERSION}, Instance: {INSTANCE_ID}")
 
 # Application info
 app_info = Info('ebanking_app', 'eBanking Application Information')
@@ -42,7 +48,9 @@ app_info.info({
     'service': SERVICE_NAME,
     'region': REGION,
     'cluster': CLUSTER,
-    'organization': 'Data2AI Academy'
+    'organization': 'Data2AI Academy',
+    'instance_id': INSTANCE_ID,
+    'start_time': START_TIME
 })
 
 # ============================================
