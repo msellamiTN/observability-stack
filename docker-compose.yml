@@ -165,11 +165,11 @@ services:
     ports:
       - "9201:9200"
     environment:
-      - ENVIRONMENT=training
-      - SERVICE_NAME=ebanking-api
-      - REGION=eu-west-1
-      - CLUSTER=training-cluster
-      - APP_VERSION=1.0.0
+      - ENVIRONMENT=${ENVIRONMENT_TRAINING:-training}
+      - SERVICE_NAME=${SERVICE_NAME:-ebanking-api}
+      - REGION=${REGION:-eu-west-1}
+      - CLUSTER=${CLUSTER_TRAINING:-training-cluster}
+      - APP_VERSION=${APP_VERSION_TRAINING:-1.0.0}
     security_opt:
       - no-new-privileges:true
     networks:
@@ -183,11 +183,11 @@ services:
     ports:
       - "9202:9200"
     environment:
-      - ENVIRONMENT=production
-      - SERVICE_NAME=ebanking-api
-      - REGION=eu-west-1
-      - CLUSTER=production-cluster
-      - APP_VERSION=2.0.0
+      - ENVIRONMENT=${ENVIRONMENT_PRODUCTION:-production}
+      - SERVICE_NAME=${SERVICE_NAME:-ebanking-api}
+      - REGION=${REGION:-eu-west-1}
+      - CLUSTER=${CLUSTER_PRODUCTION:-production-cluster}
+      - APP_VERSION=${APP_VERSION_PRODUCTION:-2.0.0}
     security_opt:
       - no-new-privileges:true
     networks:
