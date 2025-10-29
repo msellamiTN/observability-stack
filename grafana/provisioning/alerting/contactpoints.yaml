@@ -1,0 +1,96 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: Slack - Payment Service
+    receivers:
+      - uid: slack_payment_service
+        type: slack
+        settings:
+          url: $SLACK_WEBHOOK_URL
+          recipient: '#payement-service'
+          title: |
+            🚨 {{ .Status | toUpper }} - Payment API Alert
+          text: |
+            **Alert:** {{ .CommonLabels.alertname }}
+            **Status:** {{ .Status }}
+            **Severity:** {{ .CommonLabels.severity }}
+            **Environment:** {{ .CommonLabels.environment }}
+            
+            **Summary:** {{ .CommonAnnotations.summary }}
+            **Description:** {{ .CommonAnnotations.description }}
+            
+            **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+            
+            {{ if .DashboardURL }}[📊 View Dashboard]({{ .DashboardURL }}){{ end }}
+            {{ if .PanelURL }}[📈 View Panel]({{ .PanelURL }}){{ end }}
+            {{ if .SilenceURL }}[🔕 Silence]({{ .SilenceURL }}){{ end }}
+          username: Grafana Observability
+          icon_emoji: ':grafana:'
+          mention_channel: 'here'
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: Email - Critical Alerts
+    receivers:
+      - uid: email_critical
+        type: email
+        settings:
+          addresses: oncall@data2-ai.comppel
+          singleEmail: false
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: Email - Platform Team
+    receivers:
+      - uid: email_platform
+        type: email
+        settings:
+          addresses: platform-team@data2-ai.comppel
+          singleEmail: false
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: Slack + Email - Critical
+    receivers:
+      - uid: slack_critical
+        type: slack
+        settings:
+          url: $SLACK_WEBHOOK_CRITICAL
+          recipient: '#critical-alerts'
+          title: |
+            🔴 CRITICAL ALERT - {{ .CommonLabels.alertname }}
+          text: |
+            **🚨 CRITICAL ALERT 🚨**
+            
+            **Alert:** {{ .CommonLabels.alertname }}
+            **Status:** {{ .Status }}
+            **Severity:** {{ .CommonLabels.severity }}
+            **Environment:** {{ .CommonLabels.environment }}
+            **Service:** {{ .CommonLabels.service }}
+            
+            **Summary:** {{ .CommonAnnotations.summary }}
+            **Description:** {{ .CommonAnnotations.description }}
+            
+            **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+            {{ if .EndsAt }}**Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+            
+            **Affected Metrics:**
+            {{ range .Alerts }}
+            • {{ .Labels.alertname }}: {{ .Annotations.summary }}
+            {{ end }}
+            
+            **Actions:**
+            {{ if .DashboardURL }}• [📊 View Dashboard]({{ .DashboardURL }}){{ end }}
+            {{ if .PanelURL }}• [📈 View Panel]({{ .PanelURL }}){{ end }}
+            {{ if .SilenceURL }}• [🔕 Silence Alert]({{ .SilenceURL }}){{ end }}
+          username: Grafana Critical Alerts
+          icon_emoji: ':rotating_light:'
+          mention_channel: 'channel'
+        disableResolveMessage: false
+      - uid: email_critical_combined
+        type: email
+        settings:
+          addresses: oncall@data2-ai.comppel
+          singleEmail: false
+        disableResolveMessage: false

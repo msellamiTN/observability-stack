@@ -48,6 +48,8 @@ services:
       - GF_PATHS_DATA=/var/lib/grafana
       - GF_PATHS_LOGS=/var/log/grafana
       - TZ=UTC
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - SLACK_WEBHOOK_CRITICAL=${SLACK_WEBHOOK_CRITICAL}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/grafana.ini:/etc/grafana/grafana.ini
@@ -157,37 +159,19 @@ services:
       retries: 3
       start_period: 40s
 
-  # eBanking Metrics Exporter - Training Environment
-  ebanking_metrics_exporter_training:
+  # eBanking Metrics Exporter
+  ebanking_metrics_exporter:
     build: ./ebanking-exporter
-    container_name: ebanking_metrics_exporter_training
+    container_name: ebanking_metrics_exporter
     restart: unless-stopped
     ports:
-      - "9201:9200"
+      - "9201:9200"  # Changed from 9200 to 9201 to avoid conflict
     environment:
-      - ENVIRONMENT=${ENVIRONMENT_TRAINING:-training}
+      - ENVIRONMENT=${ENVIRONMENT:-training}
       - SERVICE_NAME=${SERVICE_NAME:-ebanking-api}
       - REGION=${REGION:-eu-west-1}
-      - CLUSTER=${CLUSTER_TRAINING:-training-cluster}
-      - APP_VERSION=${APP_VERSION_TRAINING:-1.0.0}
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - observability
-
-  # eBanking Metrics Exporter - Production Environment
-  ebanking_metrics_exporter_production:
-    build: ./ebanking-exporter
-    container_name: ebanking_metrics_exporter_production
-    restart: unless-stopped
-    ports:
-      - "9202:9200"
-    environment:
-      - ENVIRONMENT=${ENVIRONMENT_PRODUCTION:-production}
-      - SERVICE_NAME=${SERVICE_NAME:-ebanking-api}
-      - REGION=${REGION:-eu-west-1}
-      - CLUSTER=${CLUSTER_PRODUCTION:-production-cluster}
-      - APP_VERSION=${APP_VERSION_PRODUCTION:-2.0.0}
+      - CLUSTER=${CLUSTER:-training-cluster}
+      - APP_VERSION=${APP_VERSION:-1.0.0}
     security_opt:
       - no-new-privileges:true
     networks:
